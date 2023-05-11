@@ -1,0 +1,63 @@
+version: "3.8"
+networks:
+  my_network:
+services:
+  mongo:
+    image: mongo:latest
+    ports:
+      - 27017:27017
+    networks:
+      - my_network
+  rabbitmq:
+    image: rabbitmq:latest
+    ports:
+      - 5672:5672
+      - 15672:15672
+    networks:
+      - my_network
+  auth:
+    build:
+      context: ./
+      dockerfile: ./auth-service/Dockerfile
+    restart: on-failure
+    environment:
+      PORT: "8080"
+    ports:
+      - 8080:8080
+    depends_on:
+      - rabbitmq
+      - mongo
+    networks:
+      - my_network
+  order:
+    build:
+      context: ./
+      dockerfile: ./order-service/Dockerfile
+    environment:
+      PORT: "8082"
+    ports:
+      - 8082:8082
+    restart: on-failure
+    depends_on:
+      - rabbitmq
+      - mongo
+    networks:
+      - my_network
+    links:
+      - rabbitmq
+  product:
+    build:
+      context: ./
+      dockerfile: ./product-service/Dockerfile
+    environment:
+      PORT: "8081"
+    ports:
+      - 8081:8081
+    restart: on-failure
+    depends_on:
+      - rabbitmq
+      - mongo
+    networks:
+      - my_network
+    links:
+      - rabbitmq
